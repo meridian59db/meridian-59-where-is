@@ -269,7 +269,7 @@ const Dashboard: React.FC = () => {
                           <S.HorizontalRule />
                           <div style={{ marginTop: '10px' }}>
                             - After voting, you&apos;ll be able to vote again
-                            after 30 minutes
+                            after 10 minutes
                           </div>
                           <S.HorizontalRule />
                           {found?.updatedAt &&

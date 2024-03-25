@@ -79,7 +79,7 @@ export const checkIsAfter = (from: Date): boolean => {
   if (!isValid(from)) {
     throw new Error('Invalid date provided.');
   }
-  const fromDatePlus5Minutes = addMinutes(from, 1); // trocar pra 30
+  const fromDatePlus5Minutes = addMinutes(from, 10);
   return (
     !isAfter(fromDatePlus5Minutes, new Date()) || isEqual(new Date(), from)
   );
