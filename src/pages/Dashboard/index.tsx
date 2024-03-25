@@ -91,7 +91,7 @@ const Dashboard: React.FC = () => {
         </h3>
         {PERSONS.map((person: Person) => {
           const found = personsList.find(
-            p => p.name.toLowerCase() === person.name.toLowerCase(),
+            p => p?.name?.toLowerCase() === person?.name?.toLowerCase(),
           );
 
           if (
