@@ -6,6 +6,7 @@ import {
   isValid,
 } from 'date-fns';
 import { Person } from '../types/person';
+import { TObject } from '../types/TObject';
 
 export const PERSONS: Person[] = [
   {
@@ -66,4 +67,67 @@ export const checkIsAfter = (from: Date): boolean => {
   );
 };
 
-export default { PERSONS, formatDis };
+export const parseData = (res: TObject[]): TObject[] => {
+  const array: TObject[] = res.map((document: any) => {
+    const doc = {
+      ...document.data,
+      id: document.id,
+    };
+    return doc;
+  });
+  return array;
+};
+
+export const objetoComMaisOcorrencias = (array: any[]): any => {
+  // Criar um objeto para contar as ocorrências de cada valor em "where"
+  const contador: any = {};
+
+  // Iterar sobre cada objeto no array e contar as ocorrências de "where"
+  array.forEach(objeto => {
+    const { where } = objeto;
+    contador[where] = (contador[where] || 0) + 1;
+  });
+
+  // Encontrar o valor com o maior número de ocorrências
+  let maxOcorrencias = 0;
+  let valorMaxOcorrencias: any = null;
+  Object.entries(contador).map(([key, val]: any) => {
+    if (contador[key] > maxOcorrencias) {
+      maxOcorrencias = contador[key];
+      valorMaxOcorrencias = key;
+    }
+    return val;
+  });
+
+  // Retornar o objeto com o valor que teve o maior número de ocorrências
+  return array.find(objeto => objeto.where === valorMaxOcorrencias);
+};
+
+/**
+ * Makes the city name prettified instead of the default (capitalized)
+ *
+ * @param { string } name
+ * @returns Prettified name
+ */
+export function prettifyName(name: string): string {
+  // Split the name into words
+  const words = name.split(' ');
+
+  // Array of words to keep lowercase
+  const lowercaseWords = ['of', 'to', 'the', 'in'];
+
+  // Function to capitalize the first letter of each word except the ones in lowercaseWords
+  function capitalize(word: string, index: number) {
+    if (index !== 0 && lowercaseWords.includes(word.toLowerCase())) {
+      return word.toLowerCase();
+    }
+    return word.charAt(0).toUpperCase() + word.slice(1).toLowerCase();
+  }
+
+  // Capitalize each word and join them back into a string
+  const prettifiedName = words.map(capitalize).join(' ');
+
+  return prettifiedName;
+}
+
+export default { PERSONS, formatDis, objetoComMaisOcorrencias, prettifyName };

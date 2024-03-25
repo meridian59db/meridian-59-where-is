@@ -20,6 +20,8 @@ export default createGlobalStyle`
 
   outline: none;
 
+  font-size: 1.1rem !important;
+
   /* liberar select em tables */
   table {
     -webkit-user-select: text !important;
@@ -42,8 +44,7 @@ export default createGlobalStyle`
 }
 
   body, html {
-    background-color: rgba(26,27,31);
-    background-color:  #08070d;
+    background-color:  #1B1B1B;
     margin: 0;
     height:100%;
 

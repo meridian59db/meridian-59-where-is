@@ -1,132 +1,241 @@
-import React, { useState, useEffect, useMemo } from 'react';
-import { PERSONS, formatDis, checkIsAfter } from '../../utils';
+import React, { useState, useEffect } from 'react';
+import {
+  PERSONS,
+  formatDis,
+  checkIsAfter,
+  parseData,
+  objetoComMaisOcorrencias,
+  prettifyName,
+} from '../../utils';
 import { Person } from '../../types/person';
+import { TObject } from '../../types/TObject';
 import * as S from './styles';
-import api from '../../services';
+import {
+  addDocumentToCollection,
+  getAllDocuments,
+  updateDocument,
+  onSnapPositions,
+} from '../../services/firebaseRepository';
 
 const Dashboard: React.FC = () => {
   const [personsList, setPersonsList] = useState<any[]>([]);
   const [action, setAction] = useState<any>({});
   const [loaded, setLoaded] = useState<boolean>(false);
 
+  // Check id
+  useEffect(() => {
+    const fetch = async () => {
+      // checar se tem id no banco / se não tiver, criar
+      if (!localStorage.getItem('userId')) {
+        const now = new Date().toString();
+        await addDocumentToCollection(
+          {
+            createdAt: now,
+            updatedAt: now,
+          },
+          'users',
+        ).then((res: TObject) => {
+          localStorage.setItem('userId', res.id);
+        });
+      } else {
+        console.log('Id already present');
+      }
+    };
+    fetch();
+  }, []);
+
+  // Snap positions
+  useEffect(() => {
+    onSnapPositions();
+  }, []);
+
+  // Get the persons
   useEffect(() => {
     const fetchData = async () => {
-      const promises = PERSONS.map(async person => {
-        const path = `pos/${person.name.toLowerCase()}.json`;
-        const fileDataResponse = await api.getFileData({ path });
-        const githubResponse = await api.getDataFromGithubFile(
-          fileDataResponse.data.data,
-        );
-        return githubResponse.data;
-      });
+      getAllDocuments().then((res: any) => {
+        // Limpar se não tem posições
+        if (!res.length) {
+          PERSONS.map((person: any) => {
+            localStorage.removeItem(person.name.toLowerCase());
+            window.location.reload();
+            return person;
+          });
+        }
 
-      try {
-        await Promise.all(promises).then(values => {
-          console.log(values);
-          setPersonsList(values);
-          setLoaded(true);
-        });
-      } catch (error) {
-        // Handle errors
-        console.error('Error fetching data:', error);
-      }
+        setPersonsList(parseData(res));
+        setLoaded(true);
+      });
     };
     fetchData();
   }, [action]);
 
-  return personsList?.length && loaded ? (
+  return !personsList && !loaded ? (
+    <></>
+  ) : (
     <>
-      <h3>
-        Please have in mind that if you choose wrongly, you will be trolling
-        people, so do it with caution
-      </h3>
       <S.CardsContainer>
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+          }}
+        >
+          <S.Title>
+            Meridian 59 - <abbr title="Where are The Wanderers?">W.A.T.W</abbr>?
+          </S.Title>
+        </div>
+        <h3>
+          The position should be marked when at least three reporters mark the
+          NPC positions
+        </h3>
         {PERSONS.map((person: Person) => {
           const found = personsList.find(
             p => p.name.toLowerCase() === person.name.toLowerCase(),
           );
-          // console.log(personsList);
-          // console.log(found);
-          // personsList.map((per: any) => console.log(per));
 
-          if (found && !checkIsAfter(new Date(found.when))) {
+          if (
+            found &&
+            found?.updatedAt &&
+            !checkIsAfter(new Date(found?.updatedAt))
+          ) {
             return (
-              <S.Card key={`${found.name}${found.when}`}>
-                {found?.name} was last found wandering at {found?.where}{' '}
-                {formatDis(found?.when, new Date())}
+              <S.Card key={found.id}>
+                <div>
+                  <strong>{prettifyName(found?.name)}</strong> was last found
+                  wandering at <strong>{found?.where}</strong>{' '}
+                  <u>{formatDis(found?.updatedAt, new Date())}</u>
+                </div>
               </S.Card>
             );
           }
           return (
-            <S.Card key={`${person.index}${person.name}`}>
-              <div>
-                <strong>Where did you last see {person.name}</strong>?
-              </div>
-              <div>
-                <select
-                  defaultValue={-1}
-                  onChange={async (
-                    event: React.ChangeEvent<HTMLSelectElement>,
-                  ) => {
-                    const data = {
-                      path: `pos/${person.name.toLowerCase()}.json`,
-                      where: event.target.value,
-                    };
+            <S.Card key={person.index}>
+              <>
+                {localStorage.getItem(person.name.toLowerCase()) === 'true' ? (
+                  <>
+                    <div>You already voted on {person.name}!</div>
+                    <div>
+                      {found?.name && found?.updatedAt && found?.where && (
+                        <>
+                          <S.HorizontalRule />
+                          But <strong>{prettifyName(found?.name)}</strong> was
+                          last found wandering at.{' '}
+                          <strong>{found?.where}</strong>{' '}
+                          <u>
+                            {found?.updatedAt
+                              ? formatDis(found?.updatedAt, new Date())
+                              : ''}
+                          </u>
+                        </>
+                      )}
+                    </div>
+                  </>
+                ) : (
+                  <>
+                    <div>
+                      <strong>
+                        <u>Where did you last see {person.name}</u>
+                      </strong>
+                      ?
+                    </div>
+                    <S.Select
+                      defaultValue={-1}
+                      onChange={async (
+                        event: React.ChangeEvent<HTMLSelectElement>,
+                      ) => {
+                        const data = {
+                          name: person.name.toLowerCase(),
+                          votes: [
+                            {
+                              where: event.target.value,
+                              createdAt: new Date().toString(),
+                              updatedAt: null,
+                              userId: localStorage.getItem('userId'),
+                            },
+                          ],
+                        };
 
-                    await api
-                      .getFileData({
-                        path: data.path,
-                      })
-                      .then(async response => {
-                        await api
-                          .updatePosition({
-                            ...data,
-                            ...{ sha: response.data.sha },
-                          })
-                          .then((res: any) => {
-                            setAction(res);
-                            alert('file found, replaced');
-                          })
-                          .catch((err: any) => {
-                            console.error(err);
-                          });
-                      })
-                      .catch(async (err: any) => {
-                        if (err.response.status === 404) {
-                          await api
-                            .updatePosition({
-                              ...data,
-                            })
-                            .then((re: any) => {
-                              setAction(re);
-                              alert('file not found, added');
-                            })
-                            .catch(() => {
-                              console.error('error');
-                            });
+                        const allDocuments = parseData(await getAllDocuments());
+
+                        const filteredDocuments = allDocuments.filter(
+                          (document: TObject) =>
+                            document.name === person.name.toLowerCase(),
+                        );
+                        if (filteredDocuments.length <= 0) {
+                          await addDocumentToCollection(data);
+                        } else {
+                          const documentToUpdate = filteredDocuments.find(
+                            (document: TObject) =>
+                              document.name === person.name.toLowerCase(),
+                          );
+                          if (documentToUpdate) {
+                            if (documentToUpdate.votes.length >= 2) {
+                              const topVoted = objetoComMaisOcorrencias(
+                                documentToUpdate.votes,
+                              );
+                              await updateDocument(documentToUpdate.id, {
+                                ...data,
+                                votes: [],
+                                where: topVoted.where,
+                                updatedAt: new Date().toString(),
+                              });
+                              localStorage.setItem(
+                                person.name.toLowerCase(),
+                                'true',
+                              );
+                            } else if (
+                              !documentToUpdate.votes.includes(
+                                (vote: any) =>
+                                  vote.userId ===
+                                  localStorage.getItem('userId'),
+                              )
+                            ) {
+                              await updateDocument(documentToUpdate.id, {
+                                ...data,
+                                votes: [
+                                  ...documentToUpdate.votes,
+                                  {
+                                    createdAt: new Date().toString(),
+                                    userId: localStorage.getItem('userId'),
+                                    where: event.target.value,
+                                  },
+                                ],
+                              });
+                              localStorage.setItem(
+                                person.name.toLowerCase(),
+                                'true',
+                              );
+                            } else {
+                              console.log('Already voted');
+                            }
+                          }
                         }
-                      });
-                  }}
-                >
-                  <option disabled value={-1}>
-                    Select a place
-                  </option>
-                  {person.places.map((place: string) => {
-                    return (
-                      <option key={place} value={place}>
-                        {place}
+                        setAction(new Date());
+                      }}
+                    >
+                      <option className="disabled-option" disabled value={-1}>
+                        Select where you saw{' '}
+                        {person.name.toLowerCase() === 'miriana'
+                          ? 'her'
+                          : 'him'}
                       </option>
-                    );
-                  })}
-                </select>
-              </div>
+                      {person.places.map((place: string) => {
+                        return (
+                          <option key={place} value={place}>
+                            {place}
+                          </option>
+                        );
+                      })}
+                    </S.Select>
+                  </>
+                )}
+              </>
             </S.Card>
           );
         })}
       </S.CardsContainer>
     </>
-  ) : (
-    <>Loading</>
   );
 };
 
