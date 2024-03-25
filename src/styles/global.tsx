@@ -46,7 +46,6 @@ export default createGlobalStyle`
   body, html {
     background-color:  #031525;
     margin: 0;
-    height:100%;
 
     max-width: 100%;
     overflow-x: hidden;

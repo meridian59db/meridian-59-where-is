@@ -1,4 +1,5 @@
 import styled from 'styled-components';
+import { FaBullseye } from 'react-icons/fa';
 
 export const CardsContainer = styled.div`
   display: flex;
@@ -52,4 +53,29 @@ export const Header = styled.span`
 
 export const HorizontalRule = styled.hr`
   border-color: black;
+`;
+
+export const Clickable = styled.div`
+  cursor: pointer;
+  text-decoration: underline;
+
+  &:hover {
+    color: white;
+  }
+`;
+
+export const FoundIcon = styled(FaBullseye)`
+  font-size: 1.2rem;
+  color: #97a9c3;
+`;
+
+export const LastFound = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  color: #97a9c3;
+`;
+
+export const Hour = styled.u`
+  color: #97a9c3;
 `;
