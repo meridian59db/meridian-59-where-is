@@ -310,7 +310,7 @@ const Dashboard: React.FC = () => {
                           <S.Header>{prettifyName(found.name)}</S.Header>
                           <S.HorizontalRule />
                           <div style={{ marginBottom: '5px' }}>
-                            You already voted! RR
+                            You already voted!
                           </div>
                           <S.LastFound>
                             <S.FoundIcon />
