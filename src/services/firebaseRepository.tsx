@@ -146,7 +146,7 @@ export function onSnap(collectionName: string): any {
   );
 }
 
-export const onSnapPositions = (): any => {
+export const onSnapPositions = (): void => {
   // Reference to the 'positions' collection
   const positionsCollection = collection(
     db,
