@@ -53,7 +53,8 @@
       {
         "endOfLine": "auto"
       }
-    ]
+    ],
+    "no-console": "off",
   },
   "settings": {
     "import/resolver": {

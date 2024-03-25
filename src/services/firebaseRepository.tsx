@@ -177,7 +177,7 @@ export const onSnapPositions = (): any => {
       });
     },
     error => {
-      console.error('Error getting positions collection: ', error);
+      console.log('Error getting positions collection: ', error);
     },
   );
 };
