@@ -7,7 +7,7 @@ export default createGlobalStyle`
   font-family: 'Roboto', sans-serif;
   font-size: 14px;
 
-  color: gray;
+  color: #D3E3F7;
 
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -44,7 +44,7 @@ export default createGlobalStyle`
 }
 
   body, html {
-    background-color:  #1B1B1B;
+    background-color:  #031525;
     margin: 0;
     height:100%;
 

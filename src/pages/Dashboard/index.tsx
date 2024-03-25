@@ -114,9 +114,9 @@ const Dashboard: React.FC = () => {
               <>
                 {localStorage.getItem(person.name.toLowerCase()) === 'true' ? (
                   <>
-                    <div>You already voted on {person.name}!</div>
+                    <S.Header>You already voted on {person.name}</S.Header>
                     <div>
-                      {found?.name && found?.updatedAt && found?.where && (
+                      {found?.name && found?.updatedAt && found?.where ? (
                         <>
                           <S.HorizontalRule />
                           But <strong>{prettifyName(found?.name)}</strong> was
@@ -128,14 +128,25 @@ const Dashboard: React.FC = () => {
                               : ''}
                           </u>
                         </>
+                      ) : (
+                        <>
+                          - It seems nobody has found{' '}
+                          {found?.name === 'miriana' ? 'her' : 'him'} yet!
+                        </>
                       )}
+                      <div>
+                        - After voting, you&apos;ll be able to vote again after
+                        30 minutes
+                      </div>
                     </div>
                   </>
                 ) : (
                   <>
                     <div>
                       <strong>
-                        <u>Where did you last see {person.name}</u>
+                        <S.Header>
+                          Where did you last see {person.name}
+                        </S.Header>
                       </strong>
                       ?
                     </div>

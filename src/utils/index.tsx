@@ -18,6 +18,10 @@ export const PERSONS: Person[] = [
       'Main gate of Barloque',
       "The King's Way",
       "Lake of Jala's Song",
+
+      /* 'The Trading Post',
+      'The Spring of Vitality',
+      'Cragged Mountains', */
     ],
   },
   {
@@ -39,6 +43,10 @@ export const PERSONS: Person[] = [
       'Off the beaten Path',
       'The Twisted Wood',
       'North Quilicia Wood',
+      'Cragged Mountains',
+
+      /* 'The Trading Post',
+      'The Spring of Vitality', */
     ],
   },
   {
@@ -49,6 +57,22 @@ export const PERSONS: Person[] = [
       'Ukgoth, Holy Land of Trolls',
       'Upstairs in Castle Victoria',
       'The Badlands',
+
+      /* 'The Trading Post',
+      'The Spring of Vitality',
+      'Abandoned Fountain Tavern',
+      "Resting Place of Marion's Ancestors", */
+    ],
+  },
+  {
+    index: 5,
+    name: 'Maleval',
+    places: [
+      "Frisconar's Mysticals",
+      "Marion near Ran Er'Hots",
+      'Chamber of Duke Kalior',
+      'Blackstone Keep',
+      'Temple of Qor',
     ],
   },
 ];
@@ -61,7 +85,7 @@ export const checkIsAfter = (from: Date): boolean => {
   if (!isValid(from)) {
     throw new Error('Invalid date provided.');
   }
-  const fromDatePlus5Minutes = addMinutes(from, 5);
+  const fromDatePlus5Minutes = addMinutes(from, 30);
   return (
     !isAfter(fromDatePlus5Minutes, new Date()) || isEqual(new Date(), from)
   );

@@ -16,12 +16,12 @@ export const CardsContainer = styled.div`
 
 export const Card = styled.div`
   display: flex;
-  border: 1px solid gray;
+  border: 1px solid #495c73;
   border-radius: 5px;
   padding: 2%;
   flex-direction: column;
   gap: 10px;
-  background-color: rgba(0, 0, 0, 0.3);
+  background-color: #162c46;
 `;
 
 export const Card2 = styled.div``;
@@ -29,19 +29,25 @@ export const Card2 = styled.div``;
 export const Select = styled.select`
   border-radius: 5px;
   padding: 5px;
-  background-color: black;
+  background-color: #0d2136;
 
   option {
-    color: lightgray;
+    color: #97a9c3;
   }
 `;
 
 export const Title = styled.h3`
-  color: orange;
+  color: #8aabdc;
 
   abbr {
-    color: orange;
+    color: #8aabdc;
   }
+`;
+
+export const Header = styled.span`
+  color: #97a9c3;
+  text-decoration: underline;
+  font-weight: bold;
 `;
 
 export const HorizontalRule = styled.hr`
