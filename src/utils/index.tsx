@@ -2,12 +2,15 @@ import {
   formatDistance,
   isAfter,
   isEqual,
-  addMinutes,
+  addSeconds,
   isValid,
 } from 'date-fns';
 import { Person } from '../types/person';
 import { TObject } from '../types/TObject';
 
+/**
+ * All the persons we have in the have
+ */
 export const PERSONS: Person[] = [
   {
     index: 1,
@@ -71,54 +74,76 @@ export const PERSONS: Person[] = [
   },
 ];
 
+/**
+ * Formats an interval of two dates to a more human way
+ *
+ * @param { Date } from The initial date from the interval
+ * @param { Date } to The last date from the interval
+ * @returns { string } The date formatted in a recursive way
+ */
 export const formatDis = (from: Date, to: Date): string => {
   return formatDistance(from, to, { addSuffix: true });
 };
 
+/**
+ * Checks if the date we're passing is 10 minutes ahead
+ *
+ * @param { Date } from The date we're checking
+ * @returns { boolean } If from is after the specified date
+ */
 export const checkIsAfter = (from: Date): boolean => {
   if (!isValid(from)) {
     throw new Error('Invalid date provided.');
   }
-  const fromDatePlus5Minutes = addMinutes(from, 10);
+  const fromDatePlus5Minutes = addSeconds(from, 20); /* addMinutes(from, 10); */
   return (
     !isAfter(fromDatePlus5Minutes, new Date()) || isEqual(new Date(), from)
   );
 };
 
-export const parseData = (res: TObject[]): TObject[] => {
-  const array: TObject[] = res.map((document: any) => {
-    const doc = {
+/**
+ * Parses the data to the format we need
+ *
+ * @param { TObject[] } res The response array we're parsing
+ * @returns { TObject[] } The response array parsed to our format
+ */
+export const parseData = (res: TObject[]): TObject[] =>
+  res.map((document: any) => {
+    return {
       ...document.data,
       id: document.id,
     };
-    return doc;
   });
-  return array;
-};
 
-export const objetoComMaisOcorrencias = (array: any[]): any => {
-  // Criar um objeto para contar as ocorrências de cada valor em "where"
-  const contador: any = {};
+/**
+ * Gets the object that appears more than any other in the array based on 'where' key
+ *
+ * @param { any[] }array The array of objects we're trying to get information from
+ * @returns { any } The object that appears most times
+ */
+export const mostConcurrentObject = (array: any[]): any => {
+  // Create an object to count the occuencies of each value in "where"
+  const count: any = {};
 
-  // Iterar sobre cada objeto no array e contar as ocorrências de "where"
-  array.forEach(objeto => {
-    const { where } = objeto;
-    contador[where] = (contador[where] || 0) + 1;
+  // Iterate each object in the array and count the occurencies of "where"
+  array.forEach(object => {
+    const { where } = object;
+    count[where] = (count[where] || 0) + 1;
   });
 
   // Encontrar o valor com o maior número de ocorrências
-  let maxOcorrencias = 0;
-  let valorMaxOcorrencias: any = null;
-  Object.entries(contador).map(([key, val]: any) => {
-    if (contador[key] > maxOcorrencias) {
-      maxOcorrencias = contador[key];
-      valorMaxOcorrencias = key;
+  let maxOcurrencies = 0;
+  let maxOcurrenciesValue: any = null;
+  Object.entries(count).map(([key, val]: any) => {
+    if (count[key] > maxOcurrencies) {
+      maxOcurrencies = count[key];
+      maxOcurrenciesValue = key;
     }
     return val;
   });
 
-  // Retornar o objeto com o valor que teve o maior número de ocorrências
-  return array.find(objeto => objeto.where === valorMaxOcorrencias);
+  // Return the object with highest occurrency number
+  return array.find(object => object.where === maxOcurrenciesValue);
 };
 
 /**
@@ -148,4 +173,4 @@ export function prettifyName(name: string): string {
   return prettifiedName;
 }
 
-export default { PERSONS, formatDis, objetoComMaisOcorrencias, prettifyName };
+export default { PERSONS, formatDis, mostConcurrentObject, prettifyName };

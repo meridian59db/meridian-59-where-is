@@ -10,6 +10,7 @@ import {
 } from 'firebase/firestore';
 import { db } from '../utils/firebase';
 import { TObject } from '../types/TObject';
+import { parseData } from '../utils';
 
 export async function getAllDocuments(): Promise<any[]> {
   try {
@@ -146,7 +147,7 @@ export function onSnap(collectionName: string): any {
   );
 }
 
-export const onSnapPositions = (): void => {
+export const onSnapPositions = (setMyVotes: any): void => {
   // Reference to the 'positions' collection
   const positionsCollection = collection(
     db,
@@ -159,12 +160,17 @@ export const onSnapPositions = (): void => {
     snapshot => {
       snapshot.docChanges().forEach((change: any): any => {
         const retorno = change.doc.data();
-        if (
-          retorno?.votes?.length === 0 ||
-          !retorno?.votes?.find(
-            (vote: any) => vote.userId === localStorage.getItem('userId'),
-          )
-        ) {
+        let votesParsed;
+
+        // update votes
+        if (retorno !== undefined && retorno?.length) {
+          votesParsed = parseData(retorno).map((position: any) => {
+            return { name: position.name, votes: position.votes };
+          });
+          setMyVotes(votesParsed);
+        }
+
+        if (retorno?.votes?.length === 0 && retorno?.where) {
           localStorage.removeItem(retorno?.name);
         } else {
           const voted = retorno?.votes?.find(

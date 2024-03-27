@@ -1,14 +1,14 @@
 /* eslint-disable jsx-a11y/no-static-element-interactions */
 /* eslint-disable jsx-a11y/click-events-have-key-events */
 /* eslint-disable no-nested-ternary */
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, ReactElement } from 'react';
 
 import {
   PERSONS,
   formatDis,
   checkIsAfter,
   parseData,
-  objetoComMaisOcorrencias,
+  mostConcurrentObject,
   prettifyName,
 } from '../../utils';
 import { Person } from '../../types/person';
@@ -20,12 +20,15 @@ import {
   updateDocument,
   onSnapPositions,
 } from '../../services/firebaseRepository';
+import Revoting from '../../components/Revoting';
+import { VoteButtonType } from '../../types/votebutton';
 
 const Dashboard: React.FC = () => {
   const [personsList, setPersonsList] = useState<any[]>([]);
   const [action, setAction] = useState<any>({});
   const [loaded, setLoaded] = useState<boolean>(false);
   const [editing, setEditing] = useState<TObject[]>([]);
+  const [myVotes, setMyVotes] = useState<TObject[]>([]);
 
   // Check id
   useEffect(() => {
@@ -51,7 +54,7 @@ const Dashboard: React.FC = () => {
 
   // Snap positions
   useEffect(() => {
-    onSnapPositions();
+    onSnapPositions(setMyVotes);
   }, []);
 
   // Get the persons
@@ -73,11 +76,88 @@ const Dashboard: React.FC = () => {
             return { id: index, editing: false };
           }),
         ]);
+        setMyVotes(
+          parseData(res).map(position => {
+            return { name: position.name, votes: position.votes };
+          }),
+        );
+
         setLoaded(true);
       });
     };
     fetchData();
   }, [action]);
+
+  // Effect to refresh the page
+  useEffect(() => {
+    setInterval(() => {
+      getAllDocuments().then((res: any) => {
+        // Limpar se não tem posições
+        if (!res.length) {
+          PERSONS.map((person: any) => {
+            localStorage.removeItem(person.name.toLowerCase());
+            window.location.reload();
+            return person;
+          });
+        }
+
+        setPersonsList(parseData(res));
+        const trueReturn = parseData(res).map(position => {
+          return { name: position.name, votes: position.votes };
+        });
+        setMyVotes(trueReturn);
+
+        // Clear the votes that are stored
+        PERSONS.map((person: any) => {
+          const toRemove = trueReturn.filter(
+            whatever =>
+              whatever.name.toLowerCase() === person.name.toLowerCase(),
+          );
+          if (toRemove?.length === 0) {
+            localStorage.removeItem(person?.name);
+          }
+          localStorage.removeItem(person.name.toLowerCase());
+          return person;
+        });
+
+        setLoaded(true);
+      });
+    }, 10000);
+  }, []);
+
+  const VoteButton = ({
+    found,
+    person,
+    children,
+  }: VoteButtonType): ReactElement => {
+    if (!found && !person) return <></>;
+    const timePassed = checkIsAfter(new Date(found.updatedAt));
+    const votesFilteredByNpcName: TObject = myVotes.find(
+      vote => vote.name.toLowerCase() === person.name.toLowerCase(),
+    )?.votes;
+
+    const theVotes = votesFilteredByNpcName?.filter(
+      (vote: TObject) => vote.userId === localStorage.getItem('userId'),
+    );
+
+    const hasAtLeastOneVote = theVotes?.length > 0;
+
+    const alreadyVoted =
+      localStorage.getItem(found.name.toLowerCase()) !== undefined &&
+      localStorage.getItem(found.name.toLowerCase()) === 'true' &&
+      hasAtLeastOneVote;
+
+    const lastVoted = hasAtLeastOneVote ? theVotes[0]?.createdAt : new Date();
+
+    const timePassedPlayer = checkIsAfter(new Date(lastVoted));
+
+    console.log(`who: ${found.name}, timePAssedPlayer, ${timePassedPlayer}`);
+
+    if ((timePassed && alreadyVoted && timePassedPlayer) || timePassedPlayer) {
+      return <>{children}</>;
+    }
+    return <></>;
+  };
 
   return !personsList && !editing && !loaded ? (
     <></>
@@ -103,6 +183,8 @@ const Dashboard: React.FC = () => {
           const found = personsList.find(
             p => p?.name?.toLowerCase() === person?.name?.toLowerCase(),
           );
+
+          if (!found) return <></>;
 
           if (
             found &&
@@ -177,7 +259,7 @@ const Dashboard: React.FC = () => {
                             );
                             if (documentToUpdate) {
                               if (documentToUpdate.votes.length >= 1) {
-                                const topVoted = objetoComMaisOcorrencias(
+                                const topVoted = mostConcurrentObject(
                                   documentToUpdate.votes,
                                 );
                                 await updateDocument(documentToUpdate.id, {
@@ -246,7 +328,14 @@ const Dashboard: React.FC = () => {
                               <div style={{ marginBottom: '5px' }}>
                                 {localStorage.getItem(
                                   person.name.toLowerCase(),
-                                ) === 'true' && <>You&apos;ve already voted!</>}
+                                ) === 'true' && (
+                                  <>
+                                    <div>
+                                      You&apos;ve already voted, and will be
+                                      able to vote again after 10 minutes.
+                                    </div>
+                                  </>
+                                )}
                               </div>
                               <S.HorizontalRule />
                               <S.LastFound>
@@ -254,50 +343,29 @@ const Dashboard: React.FC = () => {
                                 {found?.where}
                                 {' - '}
                                 <S.Hour>
-                                  {found?.updatedAt
-                                    ? formatDis(found?.updatedAt, new Date())
+                                  {found.updatedAt
+                                    ? formatDis(found.updatedAt, new Date())
                                     : ''}
                                 </S.Hour>
                               </S.LastFound>{' '}
                             </>
                           ) : (
-                            <>
-                              {/* <>
-                            - It seems nobody has found{' '}
-                            {found?.name === 'miriana' ? 'her' : 'him'} yet!
-                            </> */}
-                            </>
+                            <></>
                           )}
                           <S.HorizontalRule />
-                          <div style={{ marginTop: '10px' }}>
-                            - After voting, you&apos;ll be able to vote again
-                            after 10 minutes
-                          </div>
-                          <S.HorizontalRule />
-                          {found?.updatedAt &&
-                            checkIsAfter(new Date(found?.updatedAt)) && (
-                              <S.Clickable
-                                onClick={() => {
-                                  const copy = [...editing];
-                                  const toEdit = copy.find(
-                                    edit => edit.id === person.index - 1,
-                                  );
-                                  if (toEdit) {
-                                    copy[person.index - 1] = {
-                                      ...toEdit,
-                                      editing: !copy[person.index - 1].editing,
-                                    };
-                                    setEditing(copy);
-                                  }
-                                }}
-                                style={{
-                                  marginTop: '8px',
-                                  textDecoration: 'underline',
-                                }}
-                              >
-                                Did it swap? click to vote again
-                              </S.Clickable>
-                            )}
+                          <VoteButton
+                            key={found.id}
+                            person={person}
+                            found={found}
+                          >
+                            <Revoting
+                              key={person.index}
+                              person={person}
+                              setEditing={setEditing}
+                              editing={editing}
+                              buttonAction="Click to vote!"
+                            />
+                          </VoteButton>
                         </div>
                       </div>
                     </>
@@ -325,31 +393,28 @@ const Dashboard: React.FC = () => {
                                 : ''}
                             </S.Hour>
                           </S.LastFound>{' '}
-                          {found?.updatedAt &&
-                            checkIsAfter(new Date(found?.updatedAt)) && (
-                              <S.Clickable
-                                onClick={() => {
-                                  const copy = [...editing];
-                                  const toEdit = copy.find(
-                                    edit => edit.id === person.index - 1,
-                                  );
-                                  if (toEdit) {
-                                    copy[person.index - 1] = {
-                                      ...toEdit,
-                                      editing: !copy[person.index - 1].editing,
-                                    };
-                                    setEditing(copy);
-                                  }
-                                }}
-                                style={{ marginTop: '10px' }}
-                              >
-                                Do you think{' '}
-                                {found?.name?.toLowerCase() === 'miriana'
-                                  ? 'her'
-                                  : 'he'}{' '}
-                                had moved?
-                              </S.Clickable>
-                            )}
+                          <VoteButton
+                            key={found.id}
+                            person={person}
+                            found={found}
+                          >
+                            <Revoting
+                              key={person.index}
+                              person={person}
+                              setEditing={setEditing}
+                              editing={editing}
+                              buttonAction={
+                                <>
+                                  {/* Do you think{' '}
+                                  {found?.name?.toLowerCase() === 'miriana'
+                                    ? 'her'
+                                    : 'he'}{' '}
+                              had moved? */}
+                                  Click to vote!
+                                </>
+                              }
+                            />
+                          </VoteButton>
                         </>
                       ) : (
                         <div>
@@ -359,27 +424,20 @@ const Dashboard: React.FC = () => {
                             - It seems nobody has found{' '}
                             {found?.name === 'miriana' ? 'her' : 'him'} yet!
                           </div>
-                          {found?.updatedAt &&
-                            checkIsAfter(new Date(found?.updatedAt)) && (
-                              <S.Clickable
-                                onClick={() => {
-                                  const copy = [...editing];
-                                  const toEdit = copy.find(
-                                    edit => edit.id === person.index - 1,
-                                  );
-                                  if (toEdit) {
-                                    copy[person.index - 1] = {
-                                      ...toEdit,
-                                      editing: !copy[person.index - 1].editing,
-                                    };
-                                    setEditing(copy);
-                                  }
-                                }}
-                                style={{ marginTop: '10px' }}
-                              >
-                                Click to vote now!
-                              </S.Clickable>
-                            )}
+
+                          <VoteButton
+                            key={found.id}
+                            person={person}
+                            found={found}
+                          >
+                            <Revoting
+                              key={person.index}
+                              person={person}
+                              editing={editing}
+                              setEditing={setEditing}
+                              buttonAction="Click to vote now!"
+                            />
+                          </VoteButton>
                         </div>
                       )}
                     </div>
@@ -401,30 +459,25 @@ const Dashboard: React.FC = () => {
                               : ''}
                           </S.Hour>
                         </S.LastFound>{' '}
-                        {found?.updatedAt &&
-                          checkIsAfter(new Date(found?.updatedAt)) && (
-                            <S.Clickable
-                              onClick={() => {
-                                const copy = [...editing];
-                                const toEdit = copy.find(
-                                  edit => edit.id === person.index - 1,
-                                );
-                                if (toEdit) {
-                                  copy[person.index - 1] = {
-                                    ...toEdit,
-                                    editing: !copy[person.index - 1].editing,
-                                  };
-                                  setEditing(copy);
-                                }
-                              }}
-                              style={{
-                                marginTop: '8px',
-                                textDecoration: 'underline',
-                              }}
-                            >
-                              Did it swap? click to vote again
-                            </S.Clickable>
-                          )}
+                        <S.HorizontalRule />
+                        <VoteButton
+                          key={found.id}
+                          person={person}
+                          found={found}
+                        >
+                          <Revoting
+                            key={person.index}
+                            person={person}
+                            editing={editing}
+                            setEditing={setEditing}
+                            /* buttonAction={`Did ${
+                              person.name.toLowerCase() === 'miriana'
+                                ? 'she'
+                                : 'he'
+                            } swap position? click to vote again`} */
+                            buttonAction="Click to vote!"
+                          />
+                        </VoteButton>
                       </div>
                     ) : (
                       <div>
@@ -434,27 +487,20 @@ const Dashboard: React.FC = () => {
                           - It seems nobody has found{' '}
                           {found?.name === 'miriana' ? 'her' : 'him'} yet!
                         </div>
-                        {found?.updatedAt &&
-                          checkIsAfter(new Date(found?.updatedAt)) && (
-                            <S.Clickable
-                              onClick={() => {
-                                const copy = [...editing];
-                                const toEdit = copy.find(
-                                  edit => edit.id === person.index - 1,
-                                );
-                                if (toEdit) {
-                                  copy[person.index - 1] = {
-                                    ...toEdit,
-                                    editing: !copy[person.index - 1].editing,
-                                  };
-                                  setEditing(copy);
-                                }
-                              }}
-                              style={{ marginTop: '10px' }}
-                            >
-                              Click to vote now!
-                            </S.Clickable>
-                          )}
+
+                        <VoteButton
+                          key={found.id}
+                          person={person}
+                          found={found}
+                        >
+                          <Revoting
+                            key={person.index}
+                            person={person}
+                            editing={editing}
+                            setEditing={setEditing}
+                            buttonAction="Click to vote now!"
+                          />
+                        </VoteButton>
                       </div>
                     )}
                   </div>
@@ -500,7 +546,7 @@ const Dashboard: React.FC = () => {
                           );
                           if (documentToUpdate) {
                             if (documentToUpdate.votes.length >= 1) {
-                              const topVoted = objetoComMaisOcorrencias(
+                              const topVoted = mostConcurrentObject(
                                 documentToUpdate.votes,
                               );
                               await updateDocument(documentToUpdate.id, {

@@ -54,7 +54,9 @@
         "endOfLine": "auto"
       }
     ],
-    "no-console": "off"
+    "no-console": "off",
+    "react/require-default-props": "off",
+    "@typescript-eslint/explicit-module-boundary-types": "off"
   },
   "settings": {
     "import/resolver": {
