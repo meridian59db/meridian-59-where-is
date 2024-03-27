@@ -2,7 +2,7 @@ import {
   formatDistance,
   isAfter,
   isEqual,
-  addSeconds,
+  addMinutes,
   isValid,
 } from 'date-fns';
 import { Person } from '../types/person';
@@ -95,7 +95,7 @@ export const checkIsAfter = (from: Date): boolean => {
   if (!isValid(from)) {
     throw new Error('Invalid date provided.');
   }
-  const fromDatePlus5Minutes = addSeconds(from, 20); /* addMinutes(from, 10); */
+  const fromDatePlus5Minutes = addMinutes(from, 10);
   return (
     !isAfter(fromDatePlus5Minutes, new Date()) || isEqual(new Date(), from)
   );
