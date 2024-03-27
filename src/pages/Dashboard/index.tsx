@@ -123,7 +123,7 @@ const Dashboard: React.FC = () => {
 
         setLoaded(true);
       });
-    }, 10000);
+    }, 5000);
   }, []);
 
   const VoteButton = ({
