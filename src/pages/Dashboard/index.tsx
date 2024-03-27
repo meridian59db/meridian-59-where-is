@@ -257,7 +257,7 @@ const Dashboard: React.FC = () => {
                                 document.name === person.name.toLowerCase(),
                             );
                             if (documentToUpdate) {
-                              if (documentToUpdate.votes.length >= 1) {
+                              if (documentToUpdate.votes.length >= 2) {
                                 const topVoted = mostConcurrentObject(
                                   documentToUpdate.votes,
                                 );
@@ -547,7 +547,7 @@ const Dashboard: React.FC = () => {
                               document.name === person.name.toLowerCase(),
                           );
                           if (documentToUpdate) {
-                            if (documentToUpdate.votes.length >= 1) {
+                            if (documentToUpdate.votes.length >= 2) {
                               const topVoted = mostConcurrentObject(
                                 documentToUpdate.votes,
                               );
