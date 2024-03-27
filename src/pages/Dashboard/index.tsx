@@ -3,6 +3,7 @@
 /* eslint-disable no-nested-ternary */
 import React, { useState, useEffect, ReactElement } from 'react';
 
+import { toast } from 'react-toastify';
 import {
   PERSONS,
   formatDis,
@@ -151,8 +152,6 @@ const Dashboard: React.FC = () => {
 
     const timePassedPlayer = checkIsAfter(new Date(lastVoted));
 
-    console.log(`who: ${found.name}, timePAssedPlayer, ${timePassedPlayer}`);
-
     if ((timePassed && alreadyVoted && timePassedPlayer) || timePassedPlayer) {
       return <>{children}</>;
     }
@@ -272,6 +271,9 @@ const Dashboard: React.FC = () => {
                                   person.name.toLowerCase(),
                                   'true',
                                 );
+                                toast.success(
+                                  'Thank you for spotting and voting =)',
+                                );
                               } else if (
                                 !documentToUpdate.votes.includes(
                                   (vote: any) =>
@@ -295,7 +297,7 @@ const Dashboard: React.FC = () => {
                                   'true',
                                 );
                               } else {
-                                console.log('Already voted');
+                                toast.error('Already voted');
                               }
                             }
                           }
@@ -581,8 +583,11 @@ const Dashboard: React.FC = () => {
                                 person.name.toLowerCase(),
                                 'true',
                               );
+                              toast.success(
+                                'Thank you for spotting and voting =)',
+                              );
                             } else {
-                              console.log('Already voted');
+                              toast.error('Already voted');
                             }
                           }
                         }
