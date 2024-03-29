@@ -5,7 +5,7 @@ export default createGlobalStyle`
 
 * {
   font-family: 'Roboto', sans-serif;
-  font-size: 14px;
+  //font-size: 14px;
 
   color: #D3E3F7;
 
@@ -20,7 +20,11 @@ export default createGlobalStyle`
 
   outline: none;
 
-  font-size: 1.1rem !important;
+  font-size: 0.8vw !important;
+
+  @media (max-width: 768px) {
+    font-size: 0.9rem !important;
+  }
 
   /* liberar select em tables */
   table {
@@ -30,29 +34,15 @@ export default createGlobalStyle`
     user-select: text !important;
   }
 
-  pre, code {
-    border-radius: 8px;
-    -webkit-user-select: text;
-    -moz-user-select: text;
-    -ms-user-select: text;
-    user-select: text;
-  }
 
   a {
       text-decoration: none;
   }
 }
 
-  body, html {
+  body {
     background-color:  #031525;
     margin: 0;
-
-    max-width: 100%;
-    overflow-x: hidden;
-
-    // Make whole website centralized
-    display: flex;
-    justify-content: center;
-    align-items: center;
+    padding: 0;
   }
 `;
