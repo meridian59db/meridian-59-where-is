@@ -161,7 +161,7 @@ const Dashboard: React.FC = () => {
   return !personsList && !editing && !loaded ? (
     <></>
   ) : (
-    <>
+    <S.Wrapper>
       <S.CardsContainer>
         <div
           style={{
@@ -174,10 +174,10 @@ const Dashboard: React.FC = () => {
             Meridian 59 - <abbr title="Where are The Wanderers?">W.A.T.W</abbr>?
           </S.Title>
         </div>
-        <h3>
-          The position should be marked when at least three reporters mark the
-          NPC positions
-        </h3>
+        <S.Head>
+          The updated spot should be marked when at least two reporters report
+          where they&apos;ve seen the wanderers.
+        </S.Head>
         {PERSONS.map((person: Person) => {
           const found = personsList.find(
             p => p?.name?.toLowerCase() === person?.name?.toLowerCase(),
@@ -192,20 +192,28 @@ const Dashboard: React.FC = () => {
           ) {
             return (
               <S.Card key={found.id}>
-                <div>
-                  <S.Header>{prettifyName(person.name)}</S.Header>
-                  <S.HorizontalRule />
+                <>
+                  <S.Header>
+                    {prettifyName(person.name)}
+                    <S.HorizontalRule />
+                  </S.Header>
                   <S.LastFound>
-                    <S.FoundIcon />
-                    {found?.where}
-                    {' - '}
+                    <S.FoundRow>
+                      <S.FoundIcon />
+                      {found?.where}
+                    </S.FoundRow>
+
                     <S.Hour>
                       {found?.updatedAt
                         ? formatDis(found?.updatedAt, new Date())
                         : ''}
                     </S.Hour>
-                  </S.LastFound>{' '}
-                </div>
+                  </S.LastFound>
+                  <div>
+                    <S.HorizontalRule />
+                  </div>
+                  <S.PlaceHolder>Vote now!</S.PlaceHolder>
+                </>
               </S.Card>
             );
           }
@@ -257,7 +265,7 @@ const Dashboard: React.FC = () => {
                                 document.name === person.name.toLowerCase(),
                             );
                             if (documentToUpdate) {
-                              if (documentToUpdate.votes.length >= 2) {
+                              if (documentToUpdate.votes.length >= 1) {
                                 const topVoted = mostConcurrentObject(
                                   documentToUpdate.votes,
                                 );
@@ -326,30 +334,31 @@ const Dashboard: React.FC = () => {
                         <div>
                           {found?.name && found?.updatedAt && found?.where ? (
                             <>
-                              <S.HorizontalRule />
                               <div style={{ marginBottom: '5px' }}>
                                 {localStorage.getItem(
                                   person.name.toLowerCase(),
                                 ) === 'true' && (
                                   <>
-                                    <div>
+                                    {/* <div>
                                       You&apos;ve already voted, and will be
                                       able to vote again after 10 minutes.
-                                    </div>
+                                    </div> */}
                                   </>
                                 )}
                               </div>
                               <S.HorizontalRule />
                               <S.LastFound>
-                                <S.FoundIcon />
-                                {found?.where}
-                                {' - '}
+                                <S.FoundRow>
+                                  <S.FoundIcon />
+                                  {found?.where}
+                                </S.FoundRow>
+
                                 <S.Hour>
                                   {found.updatedAt
                                     ? formatDis(found.updatedAt, new Date())
                                     : ''}
                                 </S.Hour>
-                              </S.LastFound>{' '}
+                              </S.LastFound>
                             </>
                           ) : (
                             <></>
@@ -365,7 +374,7 @@ const Dashboard: React.FC = () => {
                               person={person}
                               setEditing={setEditing}
                               editing={editing}
-                              buttonAction="Click to vote!"
+                              buttonAction="Vote now!"
                             />
                           </VoteButton>
                         </div>
@@ -386,15 +395,18 @@ const Dashboard: React.FC = () => {
                               'true' && <>You&apos;ve already voted!</>}
                           </div>
                           <S.LastFound>
-                            <S.FoundIcon />
-                            {found?.where}
-                            {' - '}
+                            <S.FoundRow>
+                              <S.FoundIcon />
+                              {found?.where}
+                            </S.FoundRow>
+
                             <S.Hour>
                               {found?.updatedAt
                                 ? formatDis(found?.updatedAt, new Date())
                                 : ''}
                             </S.Hour>
                           </S.LastFound>{' '}
+                          <S.HorizontalRule />
                           <VoteButton
                             key={found.id}
                             person={person}
@@ -405,16 +417,7 @@ const Dashboard: React.FC = () => {
                               person={person}
                               setEditing={setEditing}
                               editing={editing}
-                              buttonAction={
-                                <>
-                                  {/* Do you think{' '}
-                                  {found?.name?.toLowerCase() === 'miriana'
-                                    ? 'her'
-                                    : 'he'}{' '}
-                              had moved? */}
-                                  Click to vote!
-                                </>
-                              }
+                              buttonAction={<>Vote now!</>}
                             />
                           </VoteButton>
                         </>
@@ -437,7 +440,7 @@ const Dashboard: React.FC = () => {
                               person={person}
                               editing={editing}
                               setEditing={setEditing}
-                              buttonAction="Click to vote now!"
+                              buttonAction="Vote now!"
                             />
                           </VoteButton>
                         </div>
@@ -452,32 +455,29 @@ const Dashboard: React.FC = () => {
                         <S.Header>{prettifyName(found?.name)}</S.Header>
                         <S.HorizontalRule />
                         <S.LastFound>
-                          <S.FoundIcon />
-                          {found?.where}
-                          {' - '}
+                          <S.FoundRow>
+                            <S.FoundIcon />
+                            {found?.where}
+                          </S.FoundRow>
+
                           <S.Hour>
                             {found?.updatedAt
                               ? formatDis(found?.updatedAt, new Date())
                               : ''}
                           </S.Hour>
                         </S.LastFound>{' '}
-                        <S.HorizontalRule />
                         <VoteButton
                           key={found.id}
                           person={person}
                           found={found}
                         >
+                          <S.HorizontalRule />
                           <Revoting
                             key={person.index}
                             person={person}
                             editing={editing}
                             setEditing={setEditing}
-                            /* buttonAction={`Did ${
-                              person.name.toLowerCase() === 'miriana'
-                                ? 'she'
-                                : 'he'
-                            } swap position? click to vote again`} */
-                            buttonAction="Click to vote!"
+                            buttonAction="Vote now!"
                           />
                         </VoteButton>
                       </div>
@@ -495,12 +495,13 @@ const Dashboard: React.FC = () => {
                           person={person}
                           found={found}
                         >
+                          <S.HorizontalRule />
                           <Revoting
                             key={person.index}
                             person={person}
                             editing={editing}
                             setEditing={setEditing}
-                            buttonAction="Click to vote now!"
+                            buttonAction="Vote now!"
                           />
                         </VoteButton>
                       </div>
@@ -547,7 +548,7 @@ const Dashboard: React.FC = () => {
                               document.name === person.name.toLowerCase(),
                           );
                           if (documentToUpdate) {
-                            if (documentToUpdate.votes.length >= 2) {
+                            if (documentToUpdate.votes.length >= 1) {
                               const topVoted = mostConcurrentObject(
                                 documentToUpdate.votes,
                               );
@@ -615,7 +616,16 @@ const Dashboard: React.FC = () => {
           );
         })}
       </S.CardsContainer>
-    </>
+      <S.Footer>
+        Created with love by
+        <a
+          style={{ color: '#8AABDC' }}
+          href="https://github.com/meridian59db/meridian-59-where-is"
+        >
+          Magnus Clarke
+        </a>
+      </S.Footer>
+    </S.Wrapper>
   );
 };
 
