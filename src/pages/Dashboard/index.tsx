@@ -3,13 +3,11 @@
 /* eslint-disable no-nested-ternary */
 import React, { useState, useEffect, ReactElement } from 'react';
 
-import { toast } from 'react-toastify';
 import {
   PERSONS,
   formatDis,
   checkIsAfter,
   parseData,
-  mostConcurrentObject,
   prettifyName,
 } from '../../utils';
 import { Person } from '../../types/person';
@@ -18,11 +16,11 @@ import * as S from './styles';
 import {
   addDocumentToCollection,
   getAllDocuments,
-  updateDocument,
   onSnapPositions,
 } from '../../services/firebaseRepository';
 import Revoting from '../../components/Revoting';
 import { VoteButtonType } from '../../types/votebutton';
+import SelectMap from '../../components/SelectMap';
 
 const Dashboard: React.FC = () => {
   const [personsList, setPersonsList] = useState<any[]>([]);
@@ -30,6 +28,8 @@ const Dashboard: React.FC = () => {
   const [loaded, setLoaded] = useState<boolean>(false);
   const [editing, setEditing] = useState<TObject[]>([]);
   const [myVotes, setMyVotes] = useState<TObject[]>([]);
+  const [whichWereVoting, setWhichWereVoting] = useState<string[]>([]);
+  const [spottedNpcs, setSpottedNpcs] = useState<number>(0);
 
   // Check id
   useEffect(() => {
@@ -82,11 +82,14 @@ const Dashboard: React.FC = () => {
             return { name: position.name, votes: position.votes };
           }),
         );
-
-        setLoaded(true);
       });
     };
-    fetchData();
+    fetchData().then(async () => {
+      const statistics = await getAllDocuments('statistics');
+      console.log(statistics);
+      setSpottedNpcs(statistics[0].data?.spotted);
+      setLoaded(true);
+    });
   }, [action]);
 
   // Effect to refresh the page
@@ -175,8 +178,12 @@ const Dashboard: React.FC = () => {
           </S.Title>
         </div>
         <S.Head>
-          The updated spot should be marked when at least two reporters report
-          where they&apos;ve seen the wanderers.
+          The updated spot should be marked when a first spotter report where
+          the wanderer was seen.
+          <S.HowMany>
+            People have already spotted <strong>{spottedNpcs}</strong>{' '}
+            wanderering npcs!
+          </S.HowMany>
         </S.Head>
         {PERSONS.map((person: Person) => {
           const found = personsList.find(
@@ -232,100 +239,15 @@ const Dashboard: React.FC = () => {
                         </strong>
                         ?
                       </div>
-                      <S.Select
-                        defaultValue={-1}
-                        onChange={async (
-                          event: React.ChangeEvent<HTMLSelectElement>,
-                        ) => {
-                          const data = {
-                            name: person.name.toLowerCase(),
-                            votes: [
-                              {
-                                where: event.target.value,
-                                createdAt: new Date().toString(),
-                                updatedAt: null,
-                                userId: localStorage.getItem('userId'),
-                              },
-                            ],
-                          };
-
-                          const allDocuments = parseData(
-                            await getAllDocuments(),
-                          );
-
-                          const filteredDocuments = allDocuments.filter(
-                            (document: TObject) =>
-                              document.name === person.name.toLowerCase(),
-                          );
-                          if (filteredDocuments.length <= 0) {
-                            await addDocumentToCollection(data);
-                          } else {
-                            const documentToUpdate = filteredDocuments.find(
-                              (document: TObject) =>
-                                document.name === person.name.toLowerCase(),
-                            );
-                            if (documentToUpdate) {
-                              if (documentToUpdate.votes.length >= 1) {
-                                const topVoted = mostConcurrentObject(
-                                  documentToUpdate.votes,
-                                );
-                                await updateDocument(documentToUpdate.id, {
-                                  ...data,
-                                  votes: [],
-                                  where: topVoted.where,
-                                  updatedAt: new Date().toString(),
-                                });
-                                localStorage.setItem(
-                                  person.name.toLowerCase(),
-                                  'true',
-                                );
-                                toast.success(
-                                  'Thank you for spotting and voting =)',
-                                );
-                              } else if (
-                                !documentToUpdate.votes.includes(
-                                  (vote: any) =>
-                                    vote.userId ===
-                                    localStorage.getItem('userId'),
-                                )
-                              ) {
-                                await updateDocument(documentToUpdate.id, {
-                                  ...data,
-                                  votes: [
-                                    ...documentToUpdate.votes,
-                                    {
-                                      createdAt: new Date().toString(),
-                                      userId: localStorage.getItem('userId'),
-                                      where: event.target.value,
-                                    },
-                                  ],
-                                });
-                                localStorage.setItem(
-                                  person.name.toLowerCase(),
-                                  'true',
-                                );
-                              } else {
-                                toast.error('Already voted');
-                              }
-                            }
-                          }
-                          setAction(new Date());
-                        }}
-                      >
-                        <option className="disabled-option" disabled value={-1}>
-                          Select where you saw{' '}
-                          {person.name.toLowerCase() === 'miriana'
-                            ? 'her'
-                            : 'him'}
-                        </option>
-                        {person.places.map((place: string) => {
-                          return (
-                            <option key={place} value={place}>
-                              {place}
-                            </option>
-                          );
-                        })}
-                      </S.Select>
+                      <S.SelectContainer>
+                        <SelectMap
+                          key={person.index}
+                          person={person}
+                          whichWereVoting={whichWereVoting}
+                          setWhichWereVoting={setWhichWereVoting}
+                          setAction={setAction}
+                        />
+                      </S.SelectContainer>
                     </>
                   ) : (
                     <>
@@ -337,14 +259,7 @@ const Dashboard: React.FC = () => {
                               <div style={{ marginBottom: '5px' }}>
                                 {localStorage.getItem(
                                   person.name.toLowerCase(),
-                                ) === 'true' && (
-                                  <>
-                                    {/* <div>
-                                      You&apos;ve already voted, and will be
-                                      able to vote again after 10 minutes.
-                                    </div> */}
-                                  </>
-                                )}
+                                ) === 'true' && <></>}
                               </div>
                               <S.HorizontalRule />
                               <S.LastFound>
@@ -449,7 +364,6 @@ const Dashboard: React.FC = () => {
                   </>
                 ) : !editing[person.index - 1]?.editing ? (
                   <div>
-                    {/* editar */}
                     {found?.name && found?.updatedAt && found?.where ? (
                       <div>
                         <S.Header>{prettifyName(found?.name)}</S.Header>
@@ -517,98 +431,15 @@ const Dashboard: React.FC = () => {
                       </strong>
                       ?
                     </div>
-                    <S.Select
-                      defaultValue={-1}
-                      onChange={async (
-                        event: React.ChangeEvent<HTMLSelectElement>,
-                      ) => {
-                        const data = {
-                          name: person.name.toLowerCase(),
-                          votes: [
-                            {
-                              where: event.target.value,
-                              createdAt: new Date().toString(),
-                              updatedAt: null,
-                              userId: localStorage.getItem('userId'),
-                            },
-                          ],
-                        };
-
-                        const allDocuments = parseData(await getAllDocuments());
-
-                        const filteredDocuments = allDocuments.filter(
-                          (document: TObject) =>
-                            document.name === person.name.toLowerCase(),
-                        );
-                        if (filteredDocuments.length <= 0) {
-                          await addDocumentToCollection(data);
-                        } else {
-                          const documentToUpdate = filteredDocuments.find(
-                            (document: TObject) =>
-                              document.name === person.name.toLowerCase(),
-                          );
-                          if (documentToUpdate) {
-                            if (documentToUpdate.votes.length >= 1) {
-                              const topVoted = mostConcurrentObject(
-                                documentToUpdate.votes,
-                              );
-                              await updateDocument(documentToUpdate.id, {
-                                ...data,
-                                votes: [],
-                                where: topVoted.where,
-                                updatedAt: new Date().toString(),
-                              });
-                              localStorage.setItem(
-                                person.name.toLowerCase(),
-                                'true',
-                              );
-                            } else if (
-                              !documentToUpdate.votes.includes(
-                                (vote: any) =>
-                                  vote.userId ===
-                                  localStorage.getItem('userId'),
-                              )
-                            ) {
-                              await updateDocument(documentToUpdate.id, {
-                                ...data,
-                                votes: [
-                                  ...documentToUpdate.votes,
-                                  {
-                                    createdAt: new Date().toString(),
-                                    userId: localStorage.getItem('userId'),
-                                    where: event.target.value,
-                                  },
-                                ],
-                              });
-                              localStorage.setItem(
-                                person.name.toLowerCase(),
-                                'true',
-                              );
-                              toast.success(
-                                'Thank you for spotting and voting =)',
-                              );
-                            } else {
-                              toast.error('Already voted');
-                            }
-                          }
-                        }
-                        setAction(new Date());
-                      }}
-                    >
-                      <option className="disabled-option" disabled value={-1}>
-                        Select where you saw{' '}
-                        {person.name.toLowerCase() === 'miriana'
-                          ? 'her'
-                          : 'him'}
-                      </option>
-                      {person.places.map((place: string) => {
-                        return (
-                          <option key={place} value={place}>
-                            {place}
-                          </option>
-                        );
-                      })}
-                    </S.Select>
+                    <S.SelectContainer>
+                      <SelectMap
+                        key={person.index}
+                        person={person}
+                        whichWereVoting={whichWereVoting}
+                        setWhichWereVoting={setWhichWereVoting}
+                        setAction={setAction}
+                      />
+                    </S.SelectContainer>
                   </>
                 )}
               </>
