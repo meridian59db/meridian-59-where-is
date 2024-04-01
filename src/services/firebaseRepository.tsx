@@ -12,12 +12,14 @@ import { db } from '../utils/firebase';
 import { TObject } from '../types/TObject';
 import { parseData } from '../utils';
 
-export async function getAllDocuments(): Promise<any[]> {
+export async function getAllDocuments(
+  collectionToSearch?: any,
+): Promise<any[]> {
   try {
     // Reference to the collection
     const collectionRef = collection(
       db,
-      process.env.REACT_APP_COLLECTION ?? '',
+      collectionToSearch || (process.env.REACT_APP_COLLECTION ?? ''),
     );
 
     // Execute the query to get all documents in the collection
@@ -107,10 +109,15 @@ export async function getDocumentByField(
 export async function updateDocument(
   docId: string,
   newData: TObject,
+  collectionName?: string | undefined,
 ): Promise<any> {
   try {
     // Reference to the document
-    const docRef = doc(db, process.env.REACT_APP_COLLECTION ?? '', docId);
+    const docRef = doc(
+      db,
+      collectionName || (process.env.REACT_APP_COLLECTION ?? ''),
+      docId,
+    );
 
     // Update the document with the new data
     await updateDoc(docRef, newData);

@@ -1,5 +1,6 @@
 import styled from 'styled-components';
 import { FaBullseye } from 'react-icons/fa';
+import { IoMdCheckmarkCircleOutline } from 'react-icons/io';
 
 export const Wrapper = styled.div`
   display: flex;
@@ -64,6 +65,7 @@ export const Select = styled.select`
   padding: 5px;
   background-color: #0d2136;
   height: fit-content;
+  width: 100%;
 
   option {
     color: #97a9c3;
@@ -135,6 +137,7 @@ export const Head = styled.h3`
   display: flex;
   align-items: center;
   justify-content: center;
+  flex-direction: column;
 `;
 
 export const FoundRow = styled.div`
@@ -147,4 +150,24 @@ export const FoundRow = styled.div`
 export const PlaceHolder = styled.div`
   filter: opacity(0.2);
   text-decoration: underline;
+`;
+
+export const Check = styled(IoMdCheckmarkCircleOutline)`
+  font-size: 1.3rem !important;
+  margin-left: 5px;
+`;
+
+export const SelectContainer = styled.div`
+  display: flex;
+  align-items: center;
+`;
+
+export const HowMany = styled.div`
+  font-size: 0.7rem !important;
+  margin-top: 5px;
+
+  strong {
+    font-size: 0.7rem !important;
+    color: #8aabdc;
+  }
 `;
